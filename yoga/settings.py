@@ -15,9 +15,11 @@ from django.utils.translation import gettext_lazy as _
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+# BASE_DIR = D:\研一\挑战杯\yogaMaster
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_URL = '/yogaMaster/images/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'yogaMaster/images/')
+# MEDIA_ROOT = D:\研一\挑战杯\yogaMaster\yogaMaster/images/
 WEB_HOST_MEDIA_URL = 'http://127.0.0.1:8000/'
 
 
@@ -84,7 +86,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'test',
         'USER': 'root',
-        'PASSWORD':'root',
+        'PASSWORD':'123456',
         'HOST':'localhost',
         'PORT':'3306',
     }

@@ -11,6 +11,8 @@ from django.utils import timezone
 
 from yoga import settings
 from .models import User, Yoga, YogaImage, Result, StudyRecord, Favorites
+from .parse import parse_sequence,load_ps
+from .evaluate import evaluate_pose
 
 
 # Create your views here.
@@ -118,15 +120,19 @@ def getResult(request: HttpRequest):
     try:
         result = Result()
         imgid = request.POST.get('imgid')
-        result.imgid = YogaImage.objects.get(imgid=imgid)
-        original = YogaImage.objects.get(imgid=imgid).image
+        result.imgid = Yoga.objects.get(imgid=imgid)
+        # original = Yoga.objects.get(imgid=imgid)
         result.uploadImg = request.FILES.get('uploadimg')
-        result.compareImg = compareYoga(result.uploadImg.url, original.url)
-        result.content = 'some difference'
+        # result.compareImg = compareYoga(result.uploadImg.url, original.url)
+        result.compareImg, result.jsonFile = openpose(result.uploadImg)
+        result.npyFile, result.content = compareYoga(result.jsonFile, imgid)
         result.compareTime = timezone.now()
         result.save()
         imagepath = os.path.join(settings.BASE_DIR, "yogaMaster/images/{}".format(str(result.compareImg)))
         image_data = picture(imagepath)
+        studyrecord = StudyRecord()
+        studyrecord.resultid = result.resultId
+        studyrecord.usrid = request.user.usrid
         return HttpResponse(image_data, content_type="image/png")
     except Exception as e:
         # logging.info(e)
@@ -134,11 +140,33 @@ def getResult(request: HttpRequest):
         return HttpResponseBadRequest()
 
 
-def compareYoga(uploadimg: str, original: str):
+def compareYoga(uploadimg: str, imgid):
     print('compareYoga....')
-    # 填充具体算法
+    # str：json路径；imgid:以数字来表示，代表desk_keypoints等不同标识
+    path = str
+    parse_sequence(path, imgid)
+    path2 = os.path.join(os.getcwd(), 'json_npy')
+    npyFilePath = os.path.join(path2,imgid,'.npy')
+    pose_seq = load_ps(npyFilePath)
+    # 评测动作
+    # (correct, feedback) = evaluate_pose(pose_seq, 'upside_angle')
+    (correct, feedback) = evaluate_pose(pose_seq, imgid)
+    advice = ''
+    if correct:
+        advice += 'Exercise performed correctly!'
+    else:
+        advice += 'Exercise could be improved:'
+    content = feedback+'\n'+advice
+    print(content)
+    return npyFilePath, content
+
+
+def openpose(uploading: str):
+    print("openpose.............")
+    # 填充openpose算法
+    url = ''
     compareImg = "result/{}".format('a.jpg')
-    return compareImg
+    return compareImg, url
 
 
 # Get    /usr/getStudyRecord               //获取用户学习记录
